@@ -16,28 +16,61 @@ export type Database = {
     Tables: {
       notices: {
         Row: {
+          attachment_urls: string[] | null
+          category: Database["public"]["Enums"]["notice_category"]
           content: string
+          content_type: Database["public"]["Enums"]["content_type"]
           created_at: string
           created_by: string
+          department: string | null
           expires_at: string
           id: string
+          is_archived: boolean | null
+          is_published: boolean | null
+          link_url: string | null
+          priority: Database["public"]["Enums"]["notice_priority"]
+          scheduled_publish_date: string | null
+          target_audience: string[] | null
           title: string
+          year: string | null
         }
         Insert: {
+          attachment_urls?: string[] | null
+          category?: Database["public"]["Enums"]["notice_category"]
           content: string
+          content_type?: Database["public"]["Enums"]["content_type"]
           created_at?: string
           created_by: string
+          department?: string | null
           expires_at?: string
           id?: string
+          is_archived?: boolean | null
+          is_published?: boolean | null
+          link_url?: string | null
+          priority?: Database["public"]["Enums"]["notice_priority"]
+          scheduled_publish_date?: string | null
+          target_audience?: string[] | null
           title: string
+          year?: string | null
         }
         Update: {
+          attachment_urls?: string[] | null
+          category?: Database["public"]["Enums"]["notice_category"]
           content?: string
+          content_type?: Database["public"]["Enums"]["content_type"]
           created_at?: string
           created_by?: string
+          department?: string | null
           expires_at?: string
           id?: string
+          is_archived?: boolean | null
+          is_published?: boolean | null
+          link_url?: string | null
+          priority?: Database["public"]["Enums"]["notice_priority"]
+          scheduled_publish_date?: string | null
+          target_audience?: string[] | null
           title?: string
+          year?: string | null
         }
         Relationships: []
       }
@@ -94,7 +127,22 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff"
+      app_role:
+        | "admin"
+        | "staff"
+        | "hod"
+        | "faculty"
+        | "placement_cell"
+        | "exam_cell"
+      content_type: "text" | "pdf" | "image" | "link" | "video"
+      notice_category:
+        | "academic"
+        | "exams"
+        | "placements"
+        | "cultural"
+        | "sports"
+        | "circulars"
+      notice_priority: "urgent" | "important" | "general"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -222,7 +270,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      app_role: [
+        "admin",
+        "staff",
+        "hod",
+        "faculty",
+        "placement_cell",
+        "exam_cell",
+      ],
+      content_type: ["text", "pdf", "image", "link", "video"],
+      notice_category: [
+        "academic",
+        "exams",
+        "placements",
+        "cultural",
+        "sports",
+        "circulars",
+      ],
+      notice_priority: ["urgent", "important", "general"],
     },
   },
 } as const
