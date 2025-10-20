@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -7,15 +7,24 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Clock, CheckCircle, XCircle } from 'lucide-react';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { user, accountStatus, signIn, signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [signupForm, setSignupForm] = useState({ email: '', password: '', fullName: '' });
+
+  useEffect(() => {
+    if (user && accountStatus === 'approved') {
+      navigate('/dashboard');
+    }
+  }, [user, accountStatus, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +41,8 @@ const Auth = () => {
     } else {
       toast({
         title: 'Welcome back!',
-        description: 'You have successfully logged in.'
+        description: 'Checking account status...'
       });
-      navigate('/dashboard');
     }
     setIsLoading(false);
   };
@@ -52,9 +60,10 @@ const Auth = () => {
         variant: 'destructive'
       });
     } else {
+      setJustSignedUp(true);
       toast({
         title: 'Account created!',
-        description: 'You can now log in with your credentials.'
+        description: 'Waiting for admin approval.'
       });
       setSignupForm({ email: '', password: '', fullName: '' });
     }
@@ -62,7 +71,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-accent/20 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Staff Portal</CardTitle>
@@ -70,6 +79,51 @@ const Auth = () => {
             Access the digital noticeboard management
           </CardDescription>
         </CardHeader>
+        
+        {justSignedUp && (
+          <div className="px-6 pb-4">
+            <Alert className="border-warning bg-warning/10">
+              <Clock className="h-4 w-4 text-warning" />
+              <AlertDescription className="text-sm">
+                Your account is pending approval. You'll be notified once an admin reviews your registration.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
+        {user && accountStatus === 'pending' && (
+          <div className="px-6 pb-4">
+            <Alert className="border-warning bg-warning/10">
+              <Clock className="h-4 w-4 text-warning" />
+              <AlertDescription className="text-sm">
+                Your account is awaiting admin approval.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
+        {user && accountStatus === 'approved' && (
+          <div className="px-6 pb-4">
+            <Alert className="border-success bg-success/10">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <AlertDescription className="text-sm">
+                Your account is approved! Redirecting to dashboard...
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
+        {user && accountStatus === 'rejected' && (
+          <div className="px-6 pb-4">
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Your account registration was rejected. Please contact an administrator.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">

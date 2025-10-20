@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { LogIn, AlertCircle, ExternalLink, FileText, Download } from 'lucide-react';
@@ -97,22 +98,25 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Digital Noticeboard</h1>
-            <p className="text-muted-foreground">Stay updated with the latest announcements</p>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Digital Notice Board</h1>
+            <p className="text-muted-foreground">Stay updated with latest announcements</p>
           </div>
-          <Button onClick={() => navigate('/auth')} variant="outline">
-            <LogIn className="mr-2 h-4 w-4" />
-            Staff Login
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button onClick={() => navigate('/auth')} className="shadow-lg hover:shadow-xl transition-shadow">
+              <LogIn className="mr-2 h-4 w-4" />
+              Staff Login
+            </Button>
+          </div>
         </div>
 
         {urgentNotices.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-red-600">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-red-600 dark:text-red-400">
               <AlertCircle className="h-6 w-6" />
               Urgent Notices
             </h2>

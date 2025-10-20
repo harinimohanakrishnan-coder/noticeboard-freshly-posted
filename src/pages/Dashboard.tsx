@@ -4,15 +4,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { NoticeForm } from '@/components/NoticeForm';
 import { NoticeList } from '@/components/NoticeList';
-import { LogOut, Plus, Archive, Search } from 'lucide-react';
+import { AdminPanel } from '@/components/AdminPanel';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogOut, Plus, Archive, Search, FileText, Activity, Eye, Users } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, signOut, loading } = useAuth();
+  const { user, accountStatus, isAdmin, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [notices, setNotices] = useState<any[]>([]);
@@ -20,18 +22,34 @@ const Dashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    archived: 0,
+  });
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
-    }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (user) {
+    } else if (!loading && user && accountStatus === 'pending') {
+      toast({
+        title: 'Account Pending',
+        description: 'Your account is awaiting admin approval.',
+        variant: 'destructive'
+      });
+      navigate('/auth');
+    } else if (!loading && user && accountStatus === 'rejected') {
+      toast({
+        title: 'Account Rejected',
+        description: 'Your account registration was rejected.',
+        variant: 'destructive'
+      });
+      navigate('/auth');
+    } else if (user && accountStatus === 'approved') {
       fetchNotices();
+      fetchArchivedNotices();
     }
-  }, [user]);
+  }, [user, accountStatus, loading, navigate]);
 
   const fetchNotices = async () => {
     const { data, error } = await supabase
@@ -47,7 +65,15 @@ const Dashboard = () => {
         variant: 'destructive'
       });
     } else {
-      setNotices(data || []);
+      const noticeData = data || [];
+      setNotices(noticeData);
+      
+      const active = noticeData.filter(n => new Date(n.expires_at) > new Date()).length;
+      setStats(prev => ({
+        ...prev,
+        total: noticeData.length,
+        active: active,
+      }));
     }
   };
 
@@ -65,7 +91,12 @@ const Dashboard = () => {
         variant: 'destructive'
       });
     } else {
-      setArchivedNotices(data || []);
+      const archivedData = data || [];
+      setArchivedNotices(archivedData);
+      setStats(prev => ({
+        ...prev,
+        archived: archivedData.length,
+      }));
     }
   };
 
@@ -157,14 +188,15 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Notice Management</h1>
-            <p className="text-muted-foreground">Create and manage noticeboard content</p>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">Welcome to TPGIT Digital Notice Board</p>
           </div>
           <div className="flex gap-2">
+            <ThemeToggle />
             <Button onClick={() => navigate('/')} variant="outline">
               View Noticeboard
             </Button>
@@ -173,6 +205,40 @@ const Dashboard = () => {
               Logout
             </Button>
           </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Notices</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground">All your notices</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Notices</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.active}</div>
+              <p className="text-xs text-muted-foreground">Currently visible</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Archived</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.archived}</div>
+              <p className="text-xs text-muted-foreground">Past notices</p>
+            </CardContent>
+          </Card>
         </div>
 
         {isCreating ? (
@@ -197,6 +263,12 @@ const Dashboard = () => {
                   <Archive className="mr-2 h-4 w-4" />
                   Archive
                 </TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="admin">
+                    <Users className="mr-2 h-4 w-4" />
+                    User Management
+                  </TabsTrigger>
+                )}
               </TabsList>
               
               <div className="flex gap-2 w-full md:w-auto">
@@ -225,12 +297,30 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="archive">
-              <NoticeList
-                notices={filteredArchivedNotices}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Archived Notices</CardTitle>
+                  <CardDescription>View your archived notices</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {filteredArchivedNotices.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No archived notices</p>
+                  ) : (
+                    <NoticeList
+                      notices={filteredArchivedNotices}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
+
+            {isAdmin && (
+              <TabsContent value="admin">
+                <AdminPanel />
+              </TabsContent>
+            )}
           </Tabs>
         )}
       </div>
